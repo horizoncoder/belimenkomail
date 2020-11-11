@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import App from './components/App.vue'
-import Convert from './components/Convert.vue'
 import axios from 'axios'
 import VueAxios from 'vue-axios'
     
@@ -12,7 +11,4 @@ new Vue({
    el: '#app',
 })
 
-new Vue({
-    render: h => h(Convert),
-    el: '#converter',
- })
+

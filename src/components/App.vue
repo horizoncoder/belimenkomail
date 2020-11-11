@@ -1,36 +1,20 @@
 <template>
-   <div>
-       
-        <table class="table">
-            <tr v-for="item in students"  v-bind:key="item._id"> 
-                <td>{{ item.name }}</td><td><input type="checkbox" v-model="item.isDonePr"></td><td>{{item.group}}</td><td>{{ item.mark}}</td>
-                <td><a href = "#" @click="removeStud(item._id)">Удалить</a></td>
-                <td v-if = "item.name != search"><a href = "#" @click="changeValue(item.name)">Изменить</a></td>
-                <td v-if = "item.name == search">
-                    <a href = "#" @click="changeStud(item._id)">Изменино</a>
-                </td>
-                
-            </tr>
-            
-        </table>
-        
-        
-        <div class = "search">
-            <input placeholder="Имя" type="text" v-model = "stud.name">
-            <select v-model="stud.group">
-                 <option disabled value="RPZ 17 1/9">Выбирети группу</option>
-                <option value="RPZ 17 1/9">РПЗ 17 1/9</option>
-                <option value="RPZ 17 2/9">РПЗ 17 2/9</option>
-            </select>
-            <input placeholder="Оценка" type="number" v-model = "stud.mark">
-            <input type = "checkbox" v-model = "stud.isDonePr"> ПР
-            <button v-on:click="add()">Добавить</button>
-        </div> 
-         <div class = "search" style = "margin-left: 55em;">
-            <input type="text" v-model = "search">
-            <button v-on:click = "searchStudent()">Search</button>
-        </div>
-   </div>
+    <div >
+        <h3>Выберите область</h3>
+        <select  v-model = "area" v-on:click = "Sort()" @change = "Filter()">
+            <option v-for="item in mailarea"  v-bind:key="item.Ref">{{ item.SettlementAreaDescription }}</option>
+        </select>
+    <div>
+        <br>
+        <h3>Отделения новой почты</h3>
+        <select v-if = "area != false">
+            <option v-for="item in MailFilter" v-bind:key="item.Ref">{{ item.Description }} -- {{ item.CityDescription }}</option>
+        </select>
+    </div>
+
+    </div>
+
+    
 </template>
 
 <script>
@@ -41,62 +25,43 @@
     export default {
        data: function() {
            return {
-                search:"",
-                students: [],
-                stud: {name:"", group:"", mark:"", isDonePr:""}
+                mail:[],
+                mailarea:[],
+                area:false,
+                MailFilter:[]
            };
         },
-        mounted: function(){      
-            this.reload();
+        mounted: function(){
+             axios.post("https://api.novaposhta.ua/v2.0/json/",{
+                    "modelName": "AddressGeneral",
+                    "calledMethod": "getWarehouses",
+                    "methodProperties": {
+                        "CityName": ""
+                        },
+                    "apiKey": "9a557481f95094531372a9d1b55222c8"
+                }).then((response) =>{
+                    console.log(response.data);
+                    this.mail = response.data.data;
+                })
         },
         methods: {
-            removeStud: function(id){
-                Vue.axios.delete("http://46.101.212.195:3000/students/" + id)
-                .then((response) => {
-                    console.log(response.data)
-                    this.reload();
-                })
-            },
-            changeValue: function(name){
-                this.stud = this.students.find(elem => {
-                    if(elem.name == name){
-                        return elem
-                    }
+            
+            Filter: function(){
+                let search = this.area
+                this.MailFilter = _.filter(this.mail, function(id) { 
+                if(id.SettlementAreaDescription == search){
+                        if(id.SettlementTypeDescription == "місто"){
+                            return id
+                        }
+                    } 
                 });
-                this.search = name
+                console.log(this.MailFilter);
             },
-           changeStud: function(id){
-                Vue.axios.put("http://46.101.212.195:3000/students/" + id,{
-                    name: this.stud.name,
-                    group: this.stud.group,
-                    mark: this.stud.mark,
-                    isDonePr: this.stud.isDonePr
-                })
-                .then((response) => {
-                    console.log(response.data)
-                    this.reload();
-                })
+            Sort: function(){
+            var _ = require('lodash');
+            this.mailarea = _.uniqBy(this.mail, 'SettlementAreaDescription'); 
             },
-
-            add: function(){
-                Vue.axios.post("http://46.101.212.195:3000/students",{
-                    name: this.stud.name,
-                    group: this.stud.group,
-                    mark: this.stud.mark,
-                    isDonePr: this.stud.isDonePr
-                })
-                
-                .then((response) => {
-                    console.log(response.data)
-                    this.reload();
-                })
-            },
-            reload: function(){
-                Vue.axios.get("http://46.101.212.195:3000/students").then((response) => {
-                console.log(response.data)
-                this.students = response.data;
-                })
-            }
         }
     }
 </script>
+
